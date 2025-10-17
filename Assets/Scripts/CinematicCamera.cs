@@ -61,11 +61,6 @@ public class CinematicCamera : MonoBehaviour
     [Header("Camera Shots")]
     public CameraShot shots;
 
-    void Start()
-    {
-        
-    }
-    
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape)) // Escape is Initial shot
@@ -103,14 +98,13 @@ public class CinematicCamera : MonoBehaviour
         currentDist = dist;
 
         transform.position = currentPos;
-        transform.eulerAngles = new Vector3(currentRot, currentTilt, 0); // should rotate camera ??
+        transform.eulerAngles = new Vector3(currentRot, currentTilt, 0);
     }
 
     void Pan()
     {
         Debug.Log("Pan running");
-        Vector3 panVector = new Vector3(5, 5, 5);
-        MoveCamera(startPoint, endPoint, 5f);
+        StartCoroutine(MoveCamera(startPoint, endPoint, 5f));
     }
 
     // will move camera from current pos to new point(s) at a specified time
@@ -118,20 +112,28 @@ public class CinematicCamera : MonoBehaviour
     {
         float currentTime = 0f;
 
-        currentPos = pos.position;       
+        // position
+        Vector3 startPos = pos.position;
+        Vector3 targetPos = newPos.position;
 
-        while (currentTime < 1)
+        // rotation
+        Quaternion startRot = transform.rotation;
+        Quaternion endRot = Quaternion.LookRotation(poi.position - targetPos);
+
+        while (currentTime < moveTime)
         {
+            float t = currentTime / moveTime;
 
-            transform.position = Vector3.Lerp(currentPos, newPos.position, currentTime / moveTime);
+            // lerp to end using position and rotation
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
+            transform.rotation = Quaternion.Slerp(startRot, endRot, t);
 
             currentTime += Time.deltaTime;
             yield return null;
         }
+
+        // set final transform / rot
+        transform.position = targetPos;
+        transform.rotation = endRot;
     }
 }
-// Transform.Translate
-// Transform.LookAt
-
-// can manually set start/end points for now, but they would need to dynamically move with each different camera shot.
-// pan would need a start / end point transforms
